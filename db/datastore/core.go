@@ -2,26 +2,26 @@ package ds
 
 import (
 	"reflect"
-	"net/http"
+	www "net/http"
 	//
 	"golang.org/x/net/context"
 	datastore "cloud.google.com/go/datastore"
 	datastoreAE "google.golang.org/appengine/datastore"
 	"google.golang.org/appengine"
 	//
-	"github.com/golangdaddy/tarantula/web"
+	"github.com/jsonrouter/core/http"
 )
 
-func (client *Client) GetIncomplete(req web.RequestInterface, entityType string, intId int64, dst interface{}) (bool, error) {
+func (client *Client) GetIncomplete(req http.Request, entityType string, intId int64, dst interface{}) (bool, error) {
 	return client.GetStruct(req, entityType, "", intId, nil, dst)
 }
 
-func (client *Client) GetStruct(req web.RequestInterface, entityType, keyName string, intId int64, ancestor, dst interface{}) (bool, error) {
+func (client *Client) GetStruct(req http.Request, entityType, keyName string, intId int64, ancestor, dst interface{}) (bool, error) {
 
 	var key interface{}
 
 	if client.appEngine {
-		ctx := appengine.NewContext(req.R().(*http.Request))
+		ctx := appengine.NewContext(req.R().(*www.Request))
 
 		parent, _ := ancestor.(*datastoreAE.Key)
 		key = datastoreAE.NewKey(ctx, entityType, keyName, intId, parent)
@@ -32,7 +32,7 @@ func (client *Client) GetStruct(req web.RequestInterface, entityType, keyName st
 	return client.GetKey(req, key, dst)
 }
 
-func (client *Client) GetKey(req web.RequestInterface, key interface{}, dst interface{}) (bool, error) {
+func (client *Client) GetKey(req http.Request, key interface{}, dst interface{}) (bool, error) {
 
 	var err error
 	var notFound string
@@ -40,7 +40,7 @@ func (client *Client) GetKey(req web.RequestInterface, key interface{}, dst inte
 	if client.appEngine {
 		notFound = datastoreAE.ErrNoSuchEntity.Error()
 		err = datastoreAE.Get(
-			appengine.NewContext(req.R().(*http.Request)),
+			appengine.NewContext(req.R().(*www.Request)),
 			key.(*datastoreAE.Key),
 			dst,
 		)
@@ -58,17 +58,17 @@ func (client *Client) GetKey(req web.RequestInterface, key interface{}, dst inte
 	return true, nil
 }
 
-func (client *Client) PutIncomplete(req web.RequestInterface, entityType string, ancestor, src interface{}) error {
+func (client *Client) PutIncomplete(req http.Request, entityType string, ancestor, src interface{}) error {
 
 	return client.PutStruct(req, entityType, "", 0, ancestor, src)
 }
 
-func (client *Client) PutStruct(req web.RequestInterface, entityType, keyName string, intId int64, ancestor, src interface{}) error {
+func (client *Client) PutStruct(req http.Request, entityType, keyName string, intId int64, ancestor, src interface{}) error {
 
 	var key interface{}
 
 	if client.appEngine {
-		ctx := appengine.NewContext(req.R().(*http.Request))
+		ctx := appengine.NewContext(req.R().(*www.Request))
 		parent, _ := ancestor.(*datastoreAE.Key)
 		key = datastoreAE.NewKey(ctx, entityType, keyName, intId, parent)
 	} else {
@@ -79,12 +79,12 @@ func (client *Client) PutStruct(req web.RequestInterface, entityType, keyName st
 	return client.PutKey(req, key, src)
 }
 
-func (client *Client) DeleteStruct(req web.RequestInterface, entityType, keyName string, intId int64, ancestor interface{}) error {
+func (client *Client) DeleteStruct(req http.Request, entityType, keyName string, intId int64, ancestor interface{}) error {
 
 	var key interface{}
 
 	if client.appEngine {
-		ctx := appengine.NewContext(req.R().(*http.Request))
+		ctx := appengine.NewContext(req.R().(*www.Request))
 		parent, _ := ancestor.(*datastoreAE.Key)
 		key = datastoreAE.NewKey(ctx, entityType, keyName, intId, parent)
 	} else {
@@ -95,7 +95,7 @@ func (client *Client) DeleteStruct(req web.RequestInterface, entityType, keyName
 	return client.DeleteKey(req, key)
 }
 
-func (client *Client) DeleteMulti(req web.RequestInterface, keys interface{}) error {
+func (client *Client) DeleteMulti(req http.Request, keys interface{}) error {
 
 	var err error
 
@@ -103,7 +103,7 @@ func (client *Client) DeleteMulti(req web.RequestInterface, keys interface{}) er
 
 		case []*datastoreAE.Key:
 
-			ctx := appengine.NewContext(req.R().(*http.Request))
+			ctx := appengine.NewContext(req.R().(*www.Request))
 			err = datastoreAE.DeleteMulti(ctx, k)
 
 		case []*datastore.Key:
@@ -120,18 +120,18 @@ func (client *Client) DeleteMulti(req web.RequestInterface, keys interface{}) er
 	return err
 }
 
-func (client *Client) PutKey(req web.RequestInterface, key interface{}, src interface{}) error {
+func (client *Client) PutKey(req http.Request, key interface{}, src interface{}) error {
 
 	var err error
 
-	_, ok := req.(*web.TestInterface)
+	_, ok := req.(*http.MockRequest)
 	if ok {
 		return nil
 	}
 
 	if client.appEngine {
 		_, err = datastoreAE.Put(
-			appengine.NewContext(req.R().(*http.Request)),
+			appengine.NewContext(req.R().(*www.Request)),
 			key.(*datastoreAE.Key),
 			src,
 		)
@@ -146,13 +146,13 @@ func (client *Client) PutKey(req web.RequestInterface, key interface{}, src inte
 	return err
 }
 
-func (client *Client) DeleteKey(req web.RequestInterface, key interface{}) error {
+func (client *Client) DeleteKey(req http.Request, key interface{}) error {
 
 	var err error
 
 	if client.appEngine {
 		err = datastoreAE.Delete(
-			appengine.NewContext(req.R().(*http.Request)),
+			appengine.NewContext(req.R().(*www.Request)),
 			key.(*datastoreAE.Key),
 		)
 	} else {

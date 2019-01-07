@@ -1,19 +1,19 @@
 package ds
 
 import (
-	"net/http"
+	www "net/http"
 	//
 	"golang.org/x/net/context"
 	"google.golang.org/appengine"
 //	datastore "cloud.google.com/go/datastore"
 	datastoreAE "google.golang.org/appengine/datastore"
 	//
-	"github.com/golangdaddy/tarantula/web"
+	"github.com/jsonrouter/core/http"
 )
 
-func (client *Client) RunInTransaction(req web.RequestInterface, f func (context.Context) error) error {
+func (client *Client) RunInTransaction(req http.Request, f func (context.Context) error) error {
 
-	ctx := appengine.NewContext(req.R().(*http.Request))
+	ctx := appengine.NewContext(req.R().(*www.Request))
 
 	if client.appEngine {
 		return datastoreAE.RunInTransaction(
